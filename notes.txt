@@ -1,0 +1,347 @@
+THE FLASK MEGA TUTORIAL 
+
+==========================================================
+
+1. HELLO WORLD FLASK APPLICATION
+    - Create a Python virtual environment
+
+    - Create an folder for the appliation, (app)
+
+    - Create the __init__.py for the app package 
+        * Check __init__ for the code
+
+    - Create a module for routes, 'routes.py', and add a route for the homepage of the application 
+        * Import the Flask app that was created in the __init__.py file 
+        * Add the route for the index and create the view function to render the package
+    
+    - Tell Flask how to import the appliation by setting the FLASK_APP environment variable
+        * 'export FLASK_APP=microblog.py'
+
+    - Run the Flaks application 
+        * 'flask run'
+
+==========================================================
+Part II: TEMPLATES
+
+Goal: Want the homepage of microblo application to have a heading that welcomes the user
+    - Ignore the fact that the application doesn't have the concept of users yet and    
+      create a mock user  
+        * user = {'username': 'Devere'}
+
+Actions:
+    - Make a 'templates' directory to store HTML pages in Flask applications 
+        * {{ ... }} are used as placeholders to represent the parts of the page that are variable
+            and will only be known at the time of creation 
+
+    - In the 'routes.py' module:    
+        * Add the user dictionary in the index view
+        * Render the newly create 'index.html' template. (Flask will know where to find it)
+        * Run the updated Flask application and check out the HTML in the Dev Tools
+        * In the render_template, pass the placeholder variables that are used in the template
+            and set their values as well
+
+    - Add conditional statements in Jinja2 to 'index.html'
+        * "If there is a value for the title variable, then use that, if not then use 'Welcome to microblog' as the title 
+        * in the 'index.html' files there is an if statement that is wrapped in {% %}. This
+            is Jinja2's way of being able to write Python in the HTML document 
+        * It acts just as Python logic would, but be sure to end if and for statements in Jinja2
+
+    - The user will probably want to see recent posts from connected users in the home page, 
+        so we are going to need to extend the application to support this feature
+        * Create a fake object to create some users and posts to show, place them in the index function
+
+    - The template does not know how many posts to show, so we must use Jinja2's 'for' loop
+
+    - In the 'index.html' file add:
+        * a for loop construct for the posts
+        * for each post in posts; create a new <div> with the author's usersname and the body of the post
+        * DON'T FORGET TO END THE FOR construct
+
+    - Define a base template that includes a simple navigation bar and also the title logic implemented from eariler. 
+
+    - Go back and have 'index.html' extend 'base.html'
+
+==========================================================
+PART III. WEB FORMS 
+
+Concepts: Flask-WTF, Login Forms, Configuration Files 
+
+Goal: We need a way to accept input from users through web forms. This will allow users to submit blog posts, and also for logging into the application.
+
+Actions: 
+    - Install Flask-WTF extension: 
+        * 'pip install flask-wtf'
+
+    - Create the configurations for the application by creating a new file strictly for them. 
+        * Create a new Python file 
+        * Import os and create a class for the configuration that inherits from object
+        * 'SECRET_KEY' - plays an important part in most Flask applications. Flask uses the value of the secret key as a cryptographic key, useful to generate signatures or tokens
+            - This helps protect against CSRF attacks 
+            - It's value is two expressions joined by the or operator. The first term looks for the environment variable and the second is a hardcoded string.
+                This isn't very important for early development of the server, but for production you need to set a unique and complex value in the environment
+
+    - Tell Flask to read and apply the configuration file. Place this in the __init__ file right after the Flask application instance using:
+        * import the configuration class from the configuration module
+        * "app.config.from_object()'
+        
+    - Create a forms module to store all the forms for the application
+
+    - In the forms module define a user login form that:
+        * asks the user to enter a username 
+        * asks tha user to enter a password
+        * Include a "remember me" check box
+        * Include a submit button 
+
+        * Import FlaskForm class, field types and validators
+
+    - After creating the form class, add the form template to the HTML template where it needs to be rendered. The fields in the LoginForm class know how to render themselves 
+        * Add this a new login template that will extend the base.html file
+        * Use the <form> element as a container for the web form
+        * 'form.hidden_tag()' - Template argument that generates a hiden field that includes a token that is used to protect the form against CSRF attacks.
+            All you need to do to protect a form is include the token in this field and have teh SECRET_KEY variable defined in the Flask configuration
+        * In order to create the form, just include {{ form.<field_name>.label }} where you want the field label to go and {{ form.<field_name> }} where you wat the field to go. 
+        * For fields that require additional HTML attributes, those attributes can be passed as arguments. You can attach CSS classes and  IDs this way as well. 
+
+    - Code a new view function in the application that renders the 'login.html' template 
+        * Import the form objects
+        * In the view function, create an instance of LoginForm() and then render the page. Be sure to pass the instanc of LoginForm in the arguments
+
+    - Update the view function to process the data submitted by the user. Without this it will return a "Method Not Allowed" error
+        * Import flash and redirect
+        * add get and post methods to the decorator
+        * add logic below the instance of LoginForm
+        * 'form.vaidate_on_submit()' method does all the form processing work. Will be skipped on a GET request, but a POST request it will gather all the data, run the validators attached
+            to the fields, and if everything returns True, meaning the data is valid. If it returns False on one of the validations, then it will render the form again. 
+            ** Validatiion error messages will be handled later
+        * Use the flash message to show that the user has bee logged in for now because the resources aren't in place to log users yet. 
+            - Flask messages are stored in the flash() function, but they will not appear on webpages. The templates need to render these flashed messages. 
+    
+    - Add the flash message to the base template so that all the other templates can inherit this functionality 
+        * Keep in mind the way we rendered the flash message to HTMl does not look good, but it works. We will style it later
+
+    - Next task is to add validation error messages to improve user experience. Add the additional logic in the template to render them
+        * Add field validation messaes in the username and password fields 
+        * Most fields that have validations attached will have error messages added under 'form.<field_name>.errors'. This is a list
+
+    - Consider links. Writing them directly in templates and source files may be bad idea bc what if you decide to reorganize your links 
+        * To provide better control over these, Flask provides a function called url_for(), which generates URLs using its internal mapping of URLs to view functions
+        * The argument to url_for() is the endpoint name, which is the name of the view function 
+==========================================================
+PART IV: DATABASES
+
+Concepts:
+* ORM (Object Relational Mapper) - Allow applications to manage a database using high level entities. The job of the ORM is to translate the high-level operations into database commands 
+
+* SQLAlchemy - ORM that supoprts many database engines, including MySQL, PostgreSQL and SQLite. This is useful for development purposes. You can develop with SQLite then in production, choose
+            more robust database engine. 
+
+Database Migrations - if a change is made to the structure of the data in the application, then changes need to be made to the database. This is called migration.
+
+Database Models - Data that will be stored in databases will be represented by a collection of classes, usually called database modes. The ORM layer will do the translations required to map 
+                objects created from thse classes into rows in the proper database tables 
+
+Migration Repository - A directory in which the Alembic sotres its migration scripts. Each time a change is made to to the db schema, a migration scrip it 
+                    added to the repository with the details of the change.
+
+Relational Databases - Good at storing relationships between items. Think of a user who posts a blog post. The user will have a record in the user
+                    table ad the post will have a record in the posts table. These two should be linked. The field that is a link between two 
+                    tables is called a foreign key. This supports a one-to-many relationships.
+
+Goals: Provide a database for the application
+
+Actions:
+    - Install Flask-SQLAlchemy in the virtual environment:
+        'pip install flask-sqlalchemy
+
+    - Install Flask-Migrate in order to be able to make database migrations later in development:
+        'pip install flask-migrate'
+
+    - Begin to configure Flask-SQLAlchemy by adding the configurations in the config.py file   
+    
+    - Add database and database migration engine instances in the __init__ file. These object need to be create after the application.
+        * import SQLAlchemy and Migrate
+        * Set the database to an SQLAlchemy database below the Config object
+        * Set the migrate variable to Migrate instance that take teh app and the database variable as arguments
+        * Import the models at the bottom of the module tha will be used to define the structure of the database
+
+    - Create a model based off of how you want the data to be stored in the database   
+        * Create a new models.py file 
+        * import the db from app
+        * Create a user class that inherits from db.Model
+        * Fill in the class attributes that will be fields in the database
+
+    - Create the migration repository:
+        ' flask db init'
+        * All files in the migrations repository should be treated as part of the project and included in source code 
+
+    - Create first database migration:
+        'flask db migrate -m "users table"
+            * -m is optional but it adds a short descriptive text to the migration. 
+        * This will inlcude the users table that maps to the Users model. 
+        * Create manually or automatically 
+    
+    - Apply the migrations that we made in the previous step:
+        'flask db upgrade'
+
+    - Expand the database to store blog posts and create a realationship between the users and blogpost in the models.py
+        * Add a posts model to represent data in the Post table in our database 
+        * Use the id in the users table as a field in the posts table. This will server as the link between the user and what posts they make
+        * The posts table will have the required id, the body of the post, and a timestamp as well 
+
+    - Since there has been an update to the applications models, a new migration needs to be generated and then apply the migrations to the database
+        'flask db migrate -m "post table"
+        'flask db upgrade'
+
+    - Play with the database in the Python to make sure it works as intended:
+        * Import the db from app, and from app.models import User, Post
+        * Create a new instance of the User class: >> u = User(username="", email="")
+        * Add the new user to a session: >> db.session.add(u)
+            - Changes to a database are done in the context of a session, which can be accessed as 'db.session'
+            - You have have multiple changes in a session at once
+        * Register the the changes to the database: >> db.session.commit()
+            - This will write all the changs automatically, and if there is an error you can call 'db.session.rollback' to abort the session an remove changes 
+        * Add another user
+        * Play with querying the database:
+            - >>>> users = User.query.all()   -- Will return all the users. Once returned you can work with that variable as you would normally in Python
+            - >>>> user= User.query.get(1) -- This will return the user with the id that is passed in the get() method
+        * Add a blogpost using the interpreter:
+            - >>>> u = User.query.get(1)        # Get the user with the id of 1 and set it to u
+            - >>>> p = Post(body="my first post!", author = u)
+            - Add the changes to the session 
+            - Commit the changes to the database
+
+    *** When using the python interpreter to test the application, you can use the 'flask shell' command. This will open the interpreter in the context of the application, 
+        this means you will not have to do any imports.
+        - You can configure the 'shell context' which is a list of other symbols to pre-import. 
+        - Add a function in microblog.p to create a shell context that will add the databse instance and models to the shell session 
+        - @app.shell_context_processor decorator registers the functions as a shell context function. 
+            * It returns a dictionary that tells Python how to represent each item in the shell
+==========================================================
+PART V: USER LOGINS
+
+Concepts: 
+Password Hashing - In Flask there are several libraries that implement all teh logic for hashing passwords 
+    * One of them being Werkzeug which is a dependency of Flask so it is already installed by default 
+
+Werkzeug - generate_password_hash() function is used to hash the password. To verify a password hash, use check_password_hash() function. Pass in the hash and what to 
+            check it against. This is how the application will verify that a users login password matches the hash stored in the database for it  
+    
+Flask-Login - This extension manages the user logged-in state, so users can log in to the application and then navigate to different pages while the application remembers that the user           
+                is logged in. 
+    * Flask-Login keps track of the logged in user by storing its unique identifier in Flask's user session, a storage space assigned to each user who connects to the application. 
+        Each time the user navigates to a new page, Flask-Login retrieves te ID of the user from the session and then loads that user into memory. 
+
+Goals: 
+
+Actions:
+    - Use two new methods in the user model that will be used as the hashing logic
+        * Import generate_password_hash and check_password_hash
+    
+    - Let's start to create a user login.
+        * pip install flask-login
+        * After installing Flask-Login, initialize it right after the application instance in __init__.py 
+            - import LoginManager from Flask-Login and instanciate it by setting a varaible to LoginManager and passing in app.
+    
+    - Prepare the User model for Flask-Login. There are four requirements that must be used for Flask-Loging (check docs), BUT Flask-Login provides a 'mixin' class called UserMixin
+        * UserMixin includes all the generic implementations that are appropriate for most user model classes. 
+        * Import UserMixin from Flask-Login in the models.py module
+    
+    - Create a User loader function to load a user's ID into a Flask-Login session 
+        * Add the logic for the loader function to the models.py module 
+
+    - Create the user login functionality. Go back to the login view function where the flash() message is being used as a place holder. 
+        * Remember the flask message was there as a placeholder until a database was created
+        * current_user - variable comes from Flask-Login an can be used at any time to obtain the user obejct of the client requerest 
+        * Now we can log the user in forreal.
+            - First step is to load the user from the database. Use the username passed in from the form to query the db to see if the user is there 
+                * filter_by() method is a query that only includes the objects that have a matching username
+                * first() will return the user object if it exits, or None if it does not exist (basically return the first result which there will only be one username in this case)
+            - Check the password if a match for the username was provided that was also passed along in the form. This will use the check_password() method defined in models to check the 
+                password hash 
+            - If either the password or username is invalid, redirect the user back to the login page to try again 
+            - If both are correct the call Flask-Login's login_user() function which will register teh user as logged in, and will now become the value of current_user. Redirect them to index
+    
+    - Now that a login method has been created, create a method for the user to log out
+        * This can be accomplished using Flask's logout_user() function. Add a logout view function 
+        * Be sure to create a link for this logout functionality
+        * is_anonymous property is one of the attributes that Flask-Login adds to user objects using UserMixin. 
+
+    - Implement a way to force users to login to see certain pages of the application. FLask-Login comes will a way to redirect users to the login form for protected pages.
+        It will then redirect the user back to the protected page after they login. Flask needs to know what view function handles logins in __init__.py
+        * Add the login view in the __init__ file
+        * After setting the view that handles logins, use the @login_required decorator for routes that are only accessible by users. 
+            - @login_required decorator will rediect unauthenitcated users to the login and add a query string to the URL '/login?next=/index'
+        * Create the redirect back to the web page following a successful login. Add extra information to redirect back to this page. 
+            - read and process the 'next' query string argument in routes.py
+
+    - After the user logs in, show the user in the template so they can see 
+        * instead of the fake user being used as a placeholder an use current_user in the temlate
+
+    - Create the User Registration functionality using a web form. Create a web form class in forms.py
+        * import needed packages
+        * Create a registration form that will allow users to register with the database. Include the registration fields and types 
+        * Check the database to see if the email or username is already in use 
+
+    - Display the new registration form on the web page by creating an new template. 
+
+    - After creating the template, add a link that sends new users to the registration form in login.html. 
+
+    - Create the function that will handle user registrations 
+==========================================================
+PART VI: PROFILE PAGES AND AVATARS 
+
+Goals: Adding a user profile page to the application. Dynamically generate profile pages for all users and a a small profile editor that users can use to enter their information
+
+Concepts: 
+* Profile page - page in which informatin about a user is presented, often wit information entered by the users themselves
+
+* Decorators with dynamic components <component> - Flask will accept any test in that portion of the URL, and will invoke the view fnction with the actual text as an 
+                                                    argument
+
+* Gravatar - service that is used to provide images
+
+Actions 
+    - To create a use profile page, first write a view function that maps to it. 
+
+    - After creating the view function, create the template that will be rendered. 
+
+    - Add a link in the navigation bar that allows users to easily access their profile pages from anywhere in the signatures
+        * in the url_for, add an argument for the user since the route is dynamic
+
+    - Let's add an avatar to the user profile using Gravatar
+        * Gravatar = https://gravatar.com/avatar/<hash> where the has is the MD5 hash of the user's email address
+        * add the logic that generates an avatar URL to the User model
+
+    - Insert the avatar into the user page 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+==========================================================
+Concepts:
+
+Template Inheritance - allows you to move the parts of the page layout that are common to all templates to a base template, from wich all other templates are derived. 
+    - Use a block control statement to define the place wher the derived templates can insert themselves
+
+Configuration - Flask allows the developer a lot of freedom in how to do thing and make configurations. In order to do this we need to pass a list of configuration variables to Flask
+    - Easiest way to do this is to define the configuration variables in 'app.congif' as a dicitonary style HOWEVER you can also place the configuration in a seperate file 
+    - You can use a class to store variables, as it is very extensible 
+    - Configuration items can be access witha dictionary syntax 
+
+Flask-WTF - Uses Python classes to represent web forms. A form class defines the fields of the form as class variables 
+
