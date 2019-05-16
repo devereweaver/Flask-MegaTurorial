@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    {% if title %}
+    <title>{{ title }} - Microblog</title>
+    {% else %}
+    <title>Welcome to Microblog!</title>
+    {% endif %}    
+</head>
+<body>
+    <!-- Add a navigation bar that will be on all the pages that extend this file -->
+    <div>Microblog: 
+        <a href="{{ url_for('index') }}">Home</a>
+        {% if current_user.is_anonymous %}
+        <a href="{{ url_for('login') }}">Login</a>
+        {% else %}
+        <a href="{{ url_for('user', username=current_user.username) }}">Profile</a>
+        <a href="{{ url_for('logout') }}">Logout</a>
+        {% endif %}
+    </div>
+    <hr>
+    <!-- Open up any flashed messaged and save them to the message variable  -->
+    {% with messages = get_flashed_messages() %}
+    <!-- If there are any messages... -->
+    {% if messages %}
+    <ul>
+        <!-- For each message in the messages list -->
+        {% for message in messages %}
+        <!-- Print each one as a new list item -->
+        <li>{{ message }}</li>
+        {% endfor %}
+    </ul>
+    {% endif %}
+    {% endwith %}
+
+    <!-- This is where the content that is unique to each page will go -->
+    {% block content %}{% endblock %}
+</body>
+</html>

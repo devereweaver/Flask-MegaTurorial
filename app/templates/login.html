@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+
+<!-- Create the form inside of the block content for this page -->
+{% block content %}
+    <h1>Sign In</h1>
+    <form action="" method="POST">
+        <!-- This template expects a form object from the LoginForm class to be given 
+        as an argument. This will be sent by the login view function. TODO: Write
+        a login view function. -->
+        {{ form.hidden_tag() }}
+        <p>
+            {{ form.username.label }}<br>
+            <!-- Add an error message for any validation errors -->
+            {{ form.username(size=32) }}<br>
+            {% for error in form.username.errors %}
+            <span style="color:red;">[{{ error }}]</span>
+            {% endfor %}
+        </p>
+        <p>
+            {{ form.password.label }}<br>
+            {{ form.password(size=32) }}<br>
+            {% for error in form.password.errors %}
+            <span style="color:red;">[{{ error }}]</span>
+            {% endfor %}
+        </p>
+        <p>
+            {{ form.remember_me() }} {{ form.remember_me.label }}
+        </p>
+        <p>{{ form.submit() }}</p>
+    </form>
+    <!-- Link to allow users to register -->
+    <p>New user?<a href="{{ url_for('register') }}">Click To Register!</a></p>
+{% endblock %}
